@@ -1,0 +1,38 @@
+service: svc-sls-process-de-para-account-ecd
+
+frameworkVersion: '3'
+useDotenv: true
+
+provider:
+  name: aws
+  deploymentMethod: direct
+  runtime: python3.9
+  stage: prod
+  region: us-east-2
+  memorySize: 512
+  environment:
+    AWS_S3_ACCESS_KEY_ID: ${file(./env.json):AWS_S3_ACCESS_KEY_ID}
+    AWS_S3_SECRET_ACCESS_KEY: ${file(./env.json):AWS_S3_SECRET_ACCESS_KEY}
+    AWS_S3_REGION: ${file(./env.json):AWS_S3_REGION}
+    API_HOST_SERVERLESS: ${file(./env.json):API_HOST_SERVERLESS}
+    API_HOST_DB_RELATIONAL: ${file(./env.json):API_HOST_DB_RELATIONAL}
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer: true
+
+functions:
+  main:
+    handler: src/handler.main
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - s3:
+          bucket: ecd-de-para-account-plan
+          event: s3:ObjectCreated:*
+          existing: true
+          forceDeploy: true
