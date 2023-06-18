@@ -131,7 +131,7 @@ class ReadLinesAndProcessed(object):
     def __getDataFromIdentificadorI155(self, lineSplit: List[str]):
         balanceAccount = treatDecimalField(lineSplit[8])
         typeAccount = self.__getTypeAccount(lineSplit)
-        oldAccount = lineSplit[2]
+        oldAccount = str(lineSplit[2])
 
         if len(oldAccount) > 6:
             self.__dataToSave['codeOrClassification'] = 'classification'
