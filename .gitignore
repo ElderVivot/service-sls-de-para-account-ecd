@@ -27,3 +27,5 @@ node_modules/
 *.xls
 test.py
 __pycache__
+
+data/

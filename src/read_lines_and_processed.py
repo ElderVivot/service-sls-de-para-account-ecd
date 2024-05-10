@@ -8,6 +8,8 @@ try:
     import os
     import asyncio
     import datetime
+    import gzip
+    import base64
     from aiohttp import ClientSession
     from typing import Dict, Any, List
     import json
@@ -38,11 +40,16 @@ class ReadLinesAndProcessed(object):
 
     async def __saveData(self, ):
         try:
+            dataJson = json.dumps(self.__dataToSave)
+            dataBytes = bytes(dataJson, 'utf-8')
+            dataCompress = gzip.compress(dataBytes)
+            dataEncoded = base64.b64encode(dataCompress)
+
             async with ClientSession() as session:
                 response, statusCode = await self.__put(
                     session,
-                    f"{API_HOST_SERVERLESS}/de-para-account-ecd",
-                    data=json.loads(json.dumps(self.__dataToSave)),
+                    f"{API_HOST_SERVERLESS}/de-para-account-ecd-zip",
+                    data=json.loads(json.dumps({"data": dataEncoded.decode()})),
                     headers={}
                 )
                 if statusCode >= 400:
