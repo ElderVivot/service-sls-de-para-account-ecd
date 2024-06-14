@@ -29,8 +29,8 @@ def main(event, context):
         key = s3.get("object").get("key")
 
         try:
-            with open(f's3://{bucket}/{key}', 'r', encoding='cp1252', transport_params={"client": client}) as f:
+            with open(f's3://{bucket}/{key}', 'r', encoding='cp1252', transport_params={"client": client}, errors='ignore') as f:
                 ReadLinesAndProcessed().executeJobMainAsync(f, key)
         except Exception:
-            with open(f's3://{bucket}/{key}', 'r', transport_params={"client": client}) as f:
+            with open(f's3://{bucket}/{key}', 'r', transport_params={"client": client}, errors='ignore') as f:
                 ReadLinesAndProcessed().executeJobMainAsync(f, key)
