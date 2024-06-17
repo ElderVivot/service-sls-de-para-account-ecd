@@ -27,6 +27,10 @@ class ReadLinesAndProcessed(object):
         self.__dataToSave['accountsDePara'] = []
         self.__accountsNameToCorrelation: Dict[str, str] = {}
         self.__accountsTypeToCorrelation: Dict[str, str] = {}
+        self.__dataToSave['typeLog'] = "success",
+        self.__dataToSave["messageLog"] = "SUCCESS"
+        self.__dataToSave["messageLogToShowUser"] = "Sucesso ao processar"
+        self.__dataToSave["messageError"] = ''
 
     async def __put(self, session: ClientSession, url: str, data: Any, headers: Dict[str, str]):
         async with session.put(url, json=data, headers=headers) as response:
@@ -53,6 +57,11 @@ class ReadLinesAndProcessed(object):
                     headers={}
                 )
                 if statusCode >= 400:
+                    self.__dataToSave['typeLog'] = 'error'
+                    self.__dataToSave['messageLog'] = 'ERROR_SAVE_DATA_DYNAMO'
+                    self.__dataToSave['messageLogToShowUser'] = 'Erro ao salvar resultado do relacionamento, entre em contato com suporte.'
+                    self.__dataToSave['messageError'] = f"{statusCode} - {str(response)}"
+                    await self.__saveDataApiRelational()
                     raise Exception(statusCode, response)
                 print('Salvo no banco de dados')
 
@@ -77,9 +86,9 @@ class ReadLinesAndProcessed(object):
                         "startPeriod": self.__dataToSave['startPeriod'],
                         "endPeriod": self.__dataToSave['endPeriod'],
                         "urlFile": urlS3,
-                        "typeLog": "success",
-                        "messageLog": "SUCCESS",
-                        "messageLogToShowUser": "Sucesso ao processar",
+                        "typeLog": self.__dataToSave['typeLog'],
+                        "messageLog": self.__dataToSave['messageLog'],
+                        "messageLogToShowUser": self.__dataToSave['messageLogToShowUser'],
                         "messageError": ""
                     },
                     headers={"TENANT": self.__dataToSave['tenant']}
@@ -205,7 +214,28 @@ class ReadLinesAndProcessed(object):
                 print('Error ao processar arquivo TXT')
                 print(e)
 
-        await self.__saveData()
+        if key != '':
+            await self.__saveData()
+        else:
+            import json
+            import base64
+            import bz2
+            import sys
+            import gzip
+
+            dataBytes = bytes(json.dumps(self.__dataToSave), 'utf-8')
+            dataEncoded = base64.b64encode(dataBytes)
+            dataCompress = gzip.compress(dataBytes)
+            print(f'-dataCompress={sys.getsizeof(dataCompress)}',
+                  f'dataEncoded={sys.getsizeof(dataEncoded)}',
+                  f'dataBytes={sys.getsizeof(dataBytes)}',
+                  f"lenAccountsDePara={len(self.__dataToSave['accountsDePara'])}", sep='\n-')
+
+            jsonData = json.dumps(self.__dataToSave, indent=4)
+            # jsonData = json.dumps({"data": dataEncoded.decode()}, indent=4)
+            # jsonData = json.dumps(dataCompress, indent=4)
+            with open('data/_dataToSave.json', 'w') as outfile:
+                outfile.write(jsonData)
 
     def executeJobMainAsync(self, f: io.TextIOWrapper, key: str):
         try:
