@@ -8,12 +8,9 @@ try:
     import os
     import asyncio
     import datetime
-    import gzip
-    import base64
-    from aiohttp import ClientSession
     from typing import Dict, Any, List
-    import json
     from src.functions import removeCharSpecials, treatDecimalField, treatDateField
+    from src.save_data import SaveData
 except Exception as e:
     print(f"Error importing libraries {e}")
 
@@ -27,80 +24,10 @@ class ReadLinesAndProcessed(object):
         self.__dataToSave['accountsDePara'] = []
         self.__accountsNameToCorrelation: Dict[str, str] = {}
         self.__accountsTypeToCorrelation: Dict[str, str] = {}
-        self.__dataToSave['typeLog'] = "success",
+        self.__dataToSave['typeLog'] = "success"
         self.__dataToSave["messageLog"] = "SUCCESS"
         self.__dataToSave["messageLogToShowUser"] = "Sucesso ao processar"
         self.__dataToSave["messageError"] = ''
-
-    async def __put(self, session: ClientSession, url: str, data: Any, headers: Dict[str, str]):
-        async with session.put(url, json=data, headers=headers) as response:
-            data = await response.json()
-            return data, response.status
-
-    async def __post(self, session: ClientSession, url: str, data: Any, headers: Dict[str, str]):
-        async with session.post(url, json=data, headers=headers) as response:
-            data = await response.json()
-            return data, response.status
-
-    async def __saveData(self, ):
-        try:
-            dataJson = json.dumps(self.__dataToSave)
-            dataBytes = bytes(dataJson, 'utf-8')
-            dataCompress = gzip.compress(dataBytes)
-            dataEncoded = base64.b64encode(dataCompress)
-
-            async with ClientSession() as session:
-                response, statusCode = await self.__put(
-                    session,
-                    f"{API_HOST_SERVERLESS}/de-para-account-ecd-zip",
-                    data=json.loads(json.dumps({"data": dataEncoded.decode()})),
-                    headers={}
-                )
-                if statusCode >= 400:
-                    self.__dataToSave['typeLog'] = 'error'
-                    self.__dataToSave['messageLog'] = 'ERROR_SAVE_DATA_DYNAMO'
-                    self.__dataToSave['messageLogToShowUser'] = 'Erro ao salvar resultado do relacionamento, entre em contato com suporte.'
-                    self.__dataToSave['messageError'] = f"{statusCode} - {str(response)}"
-                    await self.__saveDataApiRelational()
-                    raise Exception(statusCode, response)
-                print('Salvo no banco de dados')
-
-                await self.__saveDataApiRelational()
-
-                return response
-        except Exception as e:
-            print('Error ao salvar dado dynamodb')
-            print(e)
-
-    async def __saveDataApiRelational(self):
-        try:
-            urlS3 = f"https://autmais-ecd-de-para-accounting-plan.s3.us-east-2.amazonaws.com/{self.__dataToSave['url']}"
-            async with ClientSession() as session:
-
-                response, statusCode = await self.__post(
-                    session,
-                    f"{API_HOST_DB_RELATIONAL}/de_para_ecd_account_plan",
-                    data={
-                        "nameCompanie": self.__dataToSave['nameCompanie'],
-                        "federalRegistration": self.__dataToSave['federalRegistration'],
-                        "startPeriod": self.__dataToSave['startPeriod'],
-                        "endPeriod": self.__dataToSave['endPeriod'],
-                        "urlFile": urlS3,
-                        "typeLog": self.__dataToSave['typeLog'],
-                        "messageLog": self.__dataToSave['messageLog'],
-                        "messageLogToShowUser": self.__dataToSave['messageLogToShowUser'],
-                        "messageError": ""
-                    },
-                    headers={"TENANT": self.__dataToSave['tenant']}
-                )
-                if statusCode >= 400:
-                    raise Exception(statusCode, response)
-                print('Salvo no banco de dados relacional')
-
-                return response
-        except Exception as e:
-            print('Error ao salvar dado banco relacional')
-            print(e)
 
     def __getTenant(self, key: str):
         try:
@@ -183,7 +110,7 @@ class ReadLinesAndProcessed(object):
                     if isFileECD is False:
                         print('Arquivo não é ECD')
                         self.__getDataFromIdentificador0000(lineSplit)
-                        await self.__saveDataApiRelational()
+                        await SaveData(self.__dataToSave).saveDataApiRelational()
                         break
 
                 identificador = lineSplit[1]
@@ -215,11 +142,10 @@ class ReadLinesAndProcessed(object):
                 print(e)
 
         if key != '':
-            await self.__saveData()
+            await SaveData(self.__dataToSave).saveData()
         else:
             import json
             import base64
-            import bz2
             import sys
             import gzip
 
