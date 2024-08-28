@@ -18,7 +18,7 @@ API_HOST_SERVERLESS = os.environ.get('API_HOST_SERVERLESS')
 API_HOST_DB_RELATIONAL = os.environ.get('API_HOST_DB_RELATIONAL')
 
 
-class ProcessSaldo(object):
+class ProcessGetSaldoOnlyI155(object):
     def __init__(self, dataFile: io.TextIOWrapper, url='', tenant='', idEcd='') -> None:
         self.__dataFile = dataFile
         self.__url = url

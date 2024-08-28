@@ -8,8 +8,8 @@ try:
     import os
     from smart_open import open
     from src.functions import returnDataInDictOrArray
-    from src.process_saldo import ProcessSaldo
-    from src.process_lancs_when_already_process_saldo import ProcessLancsWhenAlreadyProcessSaldo
+    from src.process_get_saldo_only_i155 import ProcessGetSaldoOnlyI155
+    from src.process_get_saldo_when_already_read_i155 import ProcessGetSaldoWhenAlreadyReadI155
 except Exception as e:
     print("Error importing libraries", e)
 
@@ -40,12 +40,12 @@ def main(event, context):
         try:
             with open(f's3://{bucket}/{key}', 'r', encoding='cp1252', transport_params={"client": client}, errors='ignore') as f:
                 if typeToGenerate == 'get_accounts_already_generate_by_saldo':
-                    ProcessLancsWhenAlreadyProcessSaldo(f, url, tenant, idEcd).executeJobMainAsync()
+                    ProcessGetSaldoWhenAlreadyReadI155(f, url, tenant, idEcd).executeJobMainAsync()
                 else:
-                    ProcessSaldo(f, url, tenant, idEcd).executeJobMainAsync()
+                    ProcessGetSaldoOnlyI155(f, url, tenant, idEcd).executeJobMainAsync()
         except Exception:
             with open(f's3://{bucket}/{key}', 'r', transport_params={"client": client}, errors='ignore') as f:
                 if typeToGenerate == 'get_accounts_already_generate_by_saldo':
-                    ProcessLancsWhenAlreadyProcessSaldo(f, url, tenant, idEcd).executeJobMainAsync()
+                    ProcessGetSaldoWhenAlreadyReadI155(f, url, tenant, idEcd).executeJobMainAsync()
                 else:
-                    ProcessSaldo(f, url, tenant, idEcd).executeJobMainAsync()
+                    ProcessGetSaldoOnlyI155(f, url, tenant, idEcd).executeJobMainAsync()
