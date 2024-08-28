@@ -117,17 +117,17 @@ class SaveData(object):
 
     async def saveDataApiRelational(self):
         try:
-            urlS3 = f"https://autmais-ecd-de-para-accounting-plan.s3.us-east-2.amazonaws.com/{self.__dataToSave['url']}"
             async with ClientSession() as session:
-                response, statusCode = await self.__post(
+                response, statusCode = await self.__put(
                     session,
-                    f"{API_HOST_DB_RELATIONAL}/de_para_ecd_account_plan",
+                    f"{API_HOST_DB_RELATIONAL}/de_para_ecd_account_plan/{self.__dataToSave['id']}",
                     data={
+                        "idDeParaECDAccountPlan": self.__dataToSave['id'],
                         "nameCompanie": self.__dataToSave['nameCompanie'],
                         "federalRegistration": self.__dataToSave['federalRegistration'],
                         "startPeriod": self.__dataToSave['startPeriod'],
                         "endPeriod": self.__dataToSave['endPeriod'],
-                        "urlFile": urlS3,
+                        "urlFile": self.__dataToSave['url'],
                         "typeLog": self.__dataToSave['typeLog'],
                         "messageLog": self.__dataToSave['messageLog'],
                         "messageLogToShowUser": self.__dataToSave['messageLogToShowUser'],

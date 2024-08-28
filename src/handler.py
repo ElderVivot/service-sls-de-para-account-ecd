@@ -24,13 +24,19 @@ def main(event, context):
 
     for item in event.get("Records"):
         print(item)
-        s3 = item.get("s3")
-        bucket = s3.get("bucket").get("name")
-        key = s3.get("object").get("key")
+        s3 = item.get("dynamodb")
+        url = s3.get("NewImage").get("url").get("S")
+        tenant = s3.get("NewImage").get("tenant").get("S")
+
+        urlSplit = url.split('/')
+        bucket = urlSplit[2].split('.')[0]
+        key = '/'.join(urlSplit[3:])
+
+        print('---', bucket, key)
 
         try:
             with open(f's3://{bucket}/{key}', 'r', encoding='cp1252', transport_params={"client": client}, errors='ignore') as f:
-                ReadLinesAndProcessed().executeJobMainAsync(f, key)
+                ReadLinesAndProcessed(f, url, tenant).executeJobMainAsync()
         except Exception:
             with open(f's3://{bucket}/{key}', 'r', transport_params={"client": client}, errors='ignore') as f:
-                ReadLinesAndProcessed().executeJobMainAsync(f, key)
+                ReadLinesAndProcessed(f, url, tenant).executeJobMainAsync()

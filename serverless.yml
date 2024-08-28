@@ -38,8 +38,17 @@ functions:
     layers:
       - Ref: PythonRequirementsLambdaLayer
     events:
-      - s3:
-          bucket: ecd-de-para-account-plan
-          event: s3:ObjectCreated:*
-          existing: true
-          forceDeploy: true
+      - stream:
+          arn: arn:aws:dynamodb:us-east-2:128628664119:table/trigger-services/stream/2024-08-28T07:43:11.414
+          batchSize: 1
+          startingPosition: LATEST
+          maximumRetryAttempts: 0
+          maximumRecordAgeInSeconds: 600
+          filterPatterns:
+            - {
+                "dynamodb": {
+                  "NewImage": {
+                    "service": { "S": ["de_para_ecd"] }
+                  }
+                }
+              }

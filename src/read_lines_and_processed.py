@@ -19,7 +19,11 @@ API_HOST_DB_RELATIONAL = os.environ.get('API_HOST_DB_RELATIONAL')
 
 
 class ReadLinesAndProcessed(object):
-    def __init__(self) -> None:
+    def __init__(self, dataFile: io.TextIOWrapper, url='', tenant='') -> None:
+        self.__dataFile = dataFile
+        self.__url = url
+        self.__tenant = tenant
+
         self.__dataToSave: Dict[str, Any] = {}
         self.__dataToSave['accountsDePara'] = []
         self.__accountsNameToCorrelation: Dict[str, str] = {}
@@ -29,17 +33,8 @@ class ReadLinesAndProcessed(object):
         self.__dataToSave["messageLogToShowUser"] = "Sucesso ao processar"
         self.__dataToSave["messageError"] = ''
 
-    def __getTenant(self, key: str):
-        try:
-            return key.split('/')[0]
-        except Exception:
-            return ''
-
-    def __getId(self, key: str):
-        try:
-            return key.split('/')[1].replace('.txt', '')
-        except Exception:
-            return key
+    def __getId(self):
+        return self.__url.split('/')[-1].split('.')[0]
 
     def __getDataFromIdentificador0000(self, lineSplit: List[str]):
         try:
@@ -88,19 +83,19 @@ class ReadLinesAndProcessed(object):
                 "kindBalanceAccount": lineSplit[9]
             })
 
-    async def __readLinesAndProcessed(self, f: io.TextIOWrapper, key: str):
+    async def __readLinesAndProcessed(self):
         lastI150File = False
         isFileECD = False
 
-        self.__dataToSave['url'] = key
-        self.__dataToSave['id'] = self.__getId(key)
-        self.__dataToSave['tenant'] = self.__getTenant(key)
+        self.__dataToSave['url'] = self.__url
+        self.__dataToSave['id'] = self.__getId()
+        self.__dataToSave['tenant'] = self.__tenant
         dateTimeNow = datetime.datetime.now()
         miliSecondsThreeChars = dateTimeNow.strftime('%f')[0:3]
         self.__dataToSave['updatedAt'] = f"{dateTimeNow.strftime('%Y-%m-%dT%H:%M:%S')}.{miliSecondsThreeChars}Z"
         self.__dataToSave['codeOrClassification'] = 'code'
 
-        while line := f.readline():
+        while line := self.__dataFile.readline():
             try:
                 lineFormated = removeCharSpecials(line)
                 lineSplit = lineFormated.split('|')
@@ -141,7 +136,7 @@ class ReadLinesAndProcessed(object):
                 print('Error ao processar arquivo TXT')
                 print(e)
 
-        if key != '':
+        if self.__url != '' and self.__tenant != '':
             await SaveData(self.__dataToSave).saveData()
         else:
             import json
@@ -163,8 +158,8 @@ class ReadLinesAndProcessed(object):
             with open('data/_dataToSave.json', 'w') as outfile:
                 outfile.write(jsonData)
 
-    def executeJobMainAsync(self, f: io.TextIOWrapper, key: str):
+    def executeJobMainAsync(self):
         try:
-            asyncio.run(self.__readLinesAndProcessed(f, key))
+            asyncio.run(self.__readLinesAndProcessed())
         except Exception:
             pass
