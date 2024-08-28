@@ -7,6 +7,7 @@ try:
     import unicodedata
     import re
     import datetime
+    from typing import Any, List
 except Exception as e:
     print("Error importing libraries", e)
 
@@ -70,3 +71,21 @@ def treatDateField(valorCampo, formatoData=1):
         return datetime.datetime.strptime(valorCampo[:lengthField], formatoDataStr).strftime('%Y-%m-%d %H:%M:%S')
     except ValueError:
         return None
+
+
+def returnDataInDictOrArray(data: Any, arrayStructureDataReturn: List[Any], valueDefault='') -> Any:
+    """
+    :data: vector, matrix ou dict with data -> example: {"name": "Obama", "adress": {"zipCode": "1234567"}}
+    :arrayStructureDataReturn: array in order with position of vector/matriz or name property of dict to \
+    return -> example: ['adress', 'zipCode'] -> return is '1234567'
+    """
+    try:
+        dataAccumulated = ''
+        for i in range(len(arrayStructureDataReturn)):
+            if i == 0:
+                dataAccumulated = data[arrayStructureDataReturn[i]]
+            else:
+                dataAccumulated = dataAccumulated[arrayStructureDataReturn[i]]
+        return dataAccumulated
+    except Exception:
+        return valueDefault

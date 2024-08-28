@@ -27,11 +27,6 @@ class SaveData(object):
             data = await response.json()
             return data, response.status
 
-    async def __post(self, session: ClientSession, url: str, data: Any, headers: Dict[str, str]):
-        async with session.post(url, json=data, headers=headers) as response:
-            data = await response.json()
-            return data, response.status
-
     # IMPLEMENTING TO SAVE DATA SPLIT ACCOUNT DE PARA BECAUSE LIMIT OF DYNAMODB
     # async def saveData(self, ):
     #     try:
@@ -120,9 +115,9 @@ class SaveData(object):
             async with ClientSession() as session:
                 response, statusCode = await self.__put(
                     session,
-                    f"{API_HOST_DB_RELATIONAL}/de_para_ecd_account_plan/{self.__dataToSave['id']}",
+                    f"{API_HOST_DB_RELATIONAL}/de_para_ecd_account_plan/{self.__dataToSave['idDeParaECDAccountPlan']}",
                     data={
-                        "idDeParaECDAccountPlan": self.__dataToSave['id'],
+                        "idDeParaECDAccountPlan": self.__dataToSave['idDeParaECDAccountPlan'],
                         "nameCompanie": self.__dataToSave['nameCompanie'],
                         "federalRegistration": self.__dataToSave['federalRegistration'],
                         "startPeriod": self.__dataToSave['startPeriod'],

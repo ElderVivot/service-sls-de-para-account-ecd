@@ -18,11 +18,12 @@ API_HOST_SERVERLESS = os.environ.get('API_HOST_SERVERLESS')
 API_HOST_DB_RELATIONAL = os.environ.get('API_HOST_DB_RELATIONAL')
 
 
-class ReadLinesAndProcessed(object):
-    def __init__(self, dataFile: io.TextIOWrapper, url='', tenant='') -> None:
+class ProcessSaldo(object):
+    def __init__(self, dataFile: io.TextIOWrapper, url='', tenant='', idEcd='') -> None:
         self.__dataFile = dataFile
         self.__url = url
         self.__tenant = tenant
+        self.__id = idEcd
 
         self.__dataToSave: Dict[str, Any] = {}
         self.__dataToSave['accountsDePara'] = []
@@ -32,9 +33,6 @@ class ReadLinesAndProcessed(object):
         self.__dataToSave["messageLog"] = "SUCCESS"
         self.__dataToSave["messageLogToShowUser"] = "Sucesso ao processar"
         self.__dataToSave["messageError"] = ''
-
-    def __getId(self):
-        return self.__url.split('/')[-1].split('.')[0]
 
     def __getDataFromIdentificador0000(self, lineSplit: List[str]):
         try:
@@ -88,7 +86,8 @@ class ReadLinesAndProcessed(object):
         isFileECD = False
 
         self.__dataToSave['url'] = self.__url
-        self.__dataToSave['id'] = self.__getId()
+        self.__dataToSave['id'] = self.__id
+        self.__dataToSave['idDeParaECDAccountPlan'] = self.__id
         self.__dataToSave['tenant'] = self.__tenant
         dateTimeNow = datetime.datetime.now()
         miliSecondsThreeChars = dateTimeNow.strftime('%f')[0:3]
