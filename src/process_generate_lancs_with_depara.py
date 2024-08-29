@@ -35,7 +35,7 @@ class ProcessGenerateLancsWithDePara(object):
 
         self.__dataToSave: Dict[str, Any] = {}
 
-        self.__limitLancsByFile = 10000
+        self.__limitLancsByFile = 1000
         self.__filesToZip = []
         self.__folderTmp = '/tmp' if folderTmp == '' else folderTmp
 
@@ -172,11 +172,10 @@ class ProcessGenerateLancsWithDePara(object):
                         dataFileToWrite += self.__getDataFromIdentificadorI250(lineSplit, dateMovement)
                         numberLancsFileActual += 1
                     elif identificador == '9999':
-                        if len(self.__filesToZip) == 0:
-                            pathToSave = f'{self.__folderTmp}/lancamentos_arquivo_1.txt'
-                            self.__filesToZip.append(pathToSave)
-                            with open(pathToSave, 'w') as fWrite:
-                                fWrite.write(dataFileToWrite)
+                        pathToSave = f'{self.__folderTmp}/lancamentos_arquivo_{countNumberFile}.txt'
+                        self.__filesToZip.append(pathToSave)
+                        with open(pathToSave, 'w') as fWrite:
+                            fWrite.write(dataFileToWrite)
                         print('Arquivo processado por completo')
                         break
                     else:
