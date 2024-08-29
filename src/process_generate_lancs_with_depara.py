@@ -8,6 +8,7 @@ try:
     import os
     import asyncio
     import datetime
+    from uuid import uuid4
     from typing import Dict, Any, List
     from src.functions import removeCharSpecials, treatDecimalField, treatDateField, returnDataInDictOrArray, formatDate, treatTextField
     from src.save_data import SaveData
@@ -34,7 +35,7 @@ class ProcessGenerateLancsWithDePara(object):
 
         self.__dataToSave: Dict[str, Any] = {}
 
-        self.__limitLancsByFile = 5000
+        self.__limitLancsByFile = 10000
         self.__filesToZip = []
         self.__folderTmp = '/tmp' if folderTmp == '' else folderTmp
 
@@ -98,8 +99,16 @@ class ProcessGenerateLancsWithDePara(object):
     def __uploadToR2(self):
         bufferSave = ZipDataFiles(self.__folderTmp).getZipBuffer()
 
-        pathToSaveR2 = f"de-para-ecd-lancs/{self.__tenant}/{self.__dataToSave['federalRegistration']}_{self.__id[0:15]}.zip"
-        AwsS3().upload(bufferSave, pathToSaveR2, 'application/zip', 'autmais-generic')
+        bucketName = 'autmais-generic'
+        idR2 = str(uuid4())
+        pathToSaveR2 = f"de-para-ecd-lancs/{self.__tenant}/{self.__dataToSave['federalRegistration']}_{idR2[0:15]}.zip"
+
+        # try:
+        #     AwsS3().delete(bucketName, pathToSaveR2)
+        # except Exception as e:
+        #     print(e)
+
+        AwsS3().upload(bufferSave, pathToSaveR2, 'application/zip', bucketName)
 
         self.__dataToSave['urlFileReady'] = f"https://files-autmais-generic.autmais.com/{pathToSaveR2}"
 
@@ -117,13 +126,16 @@ class ProcessGenerateLancsWithDePara(object):
             self.__dataToSave['id'] = self.__idServerless
             self.__dataToSave['idDeParaECDAccountPlan'] = self.__id
             self.__dataToSave['urlFileReady'] = ''
+            self.__dataToSave['generateLancs'] = '1'
             self.__dataToSave['tenant'] = self.__tenant
             dateTimeNow = datetime.datetime.now()
             miliSecondsThreeChars = dateTimeNow.strftime('%f')[0:3]
             self.__dataToSave['updatedAt'] = f"{dateTimeNow.strftime('%Y-%m-%dT%H:%M:%S')}.{miliSecondsThreeChars}Z"
             self.__dataToSave['codeOrClassification'] = 'code'
 
+            numberLine = 0
             while line := self.__dataFile.readline():
+                numberLine += 1
                 try:
                     lineFormated = removeCharSpecials(line)
                     lineSplit = lineFormated.split('|')
@@ -160,13 +172,17 @@ class ProcessGenerateLancsWithDePara(object):
                         dataFileToWrite += self.__getDataFromIdentificadorI250(lineSplit, dateMovement)
                         numberLancsFileActual += 1
                     elif identificador == '9999':
+                        if len(self.__filesToZip) == 0:
+                            pathToSave = f'{self.__folderTmp}/lancamentos_arquivo_1.txt'
+                            self.__filesToZip.append(pathToSave)
+                            with open(pathToSave, 'w') as fWrite:
+                                fWrite.write(dataFileToWrite)
                         print('Arquivo processado por completo')
                         break
                     else:
                         continue
                 except Exception as e:
-                    print('Error ao processar arquivo TXT')
-                    print(e)
+                    print('ERROR process_generate_lancs_with_de_para', numberLine, e)
 
             ZipDataFiles(self.__folderTmp).zip(self.__filesToZip)
 
@@ -178,6 +194,8 @@ class ProcessGenerateLancsWithDePara(object):
                 import base64
                 import sys
                 import gzip
+
+                ZipDataFiles(self.__folderTmp).getZipBuffer()
 
                 dataBytes = bytes(json.dumps(self.__dataToSave), 'utf-8')
                 dataEncoded = base64.b64encode(dataBytes)

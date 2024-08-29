@@ -78,7 +78,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
         if len(oldAccount) > 6:
             self.__dataToSave['codeOrClassification'] = 'classification'
 
-        self.__accounts[f'{oldAccount}'] = {
+        self.__accounts[oldAccount] = {
             "oldAccount": oldAccount,
             "newAccount": "",
             "nameAccount": self.__getNameAccount(lineSplit),
@@ -93,7 +93,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
         if len(oldAccount) > 6:
             self.__dataToSave['codeOrClassification'] = 'classification'
 
-        self.__accounts[f'{oldAccount}']['existLancs'] = True
+        self.__accounts[oldAccount]['existLancs'] = True
 
     def __correlationAccounts(self):
         self.__dataToSave['accountsDePara'] = []
@@ -109,8 +109,8 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
                         "balanceAccount": account['balanceAccount'],
                         "kindBalanceAccount": account['kindBalanceAccount']
                     })
-            except Exception:
-                pass
+            except Exception as e:
+                print('ERROR process_get_saldo_when_already_read_i155 correlation_accounts', e)
 
     async def __readLinesAndProcessed(self):
         try:
@@ -123,12 +123,15 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
             self.__dataToSave['id'] = self.__idServerless
             self.__dataToSave['idDeParaECDAccountPlan'] = self.__id
             self.__dataToSave['tenant'] = self.__tenant
+            self.__dataToSave['generateLancs'] = '1'
             dateTimeNow = datetime.datetime.now()
             miliSecondsThreeChars = dateTimeNow.strftime('%f')[0:3]
             self.__dataToSave['updatedAt'] = f"{dateTimeNow.strftime('%Y-%m-%dT%H:%M:%S')}.{miliSecondsThreeChars}Z"
             self.__dataToSave['codeOrClassification'] = 'code'
 
+            numberLine = 0
             while line := self.__dataFile.readline():
+                numberLine += 1
                 try:
                     lineFormated = removeCharSpecials(line)
                     lineSplit = lineFormated.split('|')
@@ -165,8 +168,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
                     else:
                         continue
                 except Exception as e:
-                    print('Error ao processar arquivo TXT')
-                    print(e)
+                    print('ERROR process_get_saldo_when_already_read_i155', numberLine, e)
 
             self.__correlationAccounts()
 

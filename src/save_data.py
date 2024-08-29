@@ -128,7 +128,8 @@ class SaveData(object):
                         "messageLog": self.__dataToSave['messageLog'],
                         "messageLogToShowUser": self.__dataToSave['messageLogToShowUser'],
                         "messageError": "",
-                        "urlFileReady": returnDataInDictOrArray(self.__dataToSave, ['urlFileReady'], '')
+                        "urlFileReady": returnDataInDictOrArray(self.__dataToSave, ['urlFileReady'], ''),
+                        "generateLancs": returnDataInDictOrArray(self.__dataToSave, ['generateLancs'], '0')
                     },
                     headers={"TENANT": self.__dataToSave['tenant']}
                 )

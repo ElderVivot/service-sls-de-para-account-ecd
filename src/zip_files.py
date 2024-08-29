@@ -15,5 +15,7 @@ class ZipDataFiles(object):
                     print('ERROR ZIP FILE', fileZip, e)
 
     def getZipBuffer(self):
+        # with ZipFile(f'{self.__folderTmp}/fileszip.zip', 'r') as zip_object:
+        #     print(zip_object.namelist())
         with open(f'{self.__folderTmp}/fileszip.zip', 'rb') as zip_object:
             return zip_object.read()

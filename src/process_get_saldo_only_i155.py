@@ -89,6 +89,7 @@ class ProcessGetSaldoOnlyI155(object):
         self.__dataToSave['id'] = self.__id
         self.__dataToSave['idDeParaECDAccountPlan'] = self.__id
         self.__dataToSave['tenant'] = self.__tenant
+        self.__dataToSave['generateLancs'] = '0'
         dateTimeNow = datetime.datetime.now()
         miliSecondsThreeChars = dateTimeNow.strftime('%f')[0:3]
         self.__dataToSave['updatedAt'] = f"{dateTimeNow.strftime('%Y-%m-%dT%H:%M:%S')}.{miliSecondsThreeChars}Z"
@@ -132,8 +133,7 @@ class ProcessGetSaldoOnlyI155(object):
                 else:
                     continue
             except Exception as e:
-                print('Error ao processar arquivo TXT')
-                print(e)
+                print('ERROR process_get_saldo_only_i155', e)
 
         if self.__url != '' and self.__tenant != '':
             await SaveData(self.__dataToSave).saveData()
