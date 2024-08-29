@@ -10,6 +10,7 @@ try:
     import base64
     from aiohttp import ClientSession
     from typing import Dict, Any, List
+    from src.functions import returnDataInDictOrArray
     import json
 except Exception as e:
     print(f"Error importing libraries {e}")
@@ -126,7 +127,8 @@ class SaveData(object):
                         "typeLog": self.__dataToSave['typeLog'],
                         "messageLog": self.__dataToSave['messageLog'],
                         "messageLogToShowUser": self.__dataToSave['messageLogToShowUser'],
-                        "messageError": ""
+                        "messageError": "",
+                        "urlFileReady": returnDataInDictOrArray(self.__dataToSave, ['urlFileReady'], '')
                     },
                     headers={"TENANT": self.__dataToSave['tenant']}
                 )

@@ -12,11 +12,20 @@ except Exception as e:
     print("Error importing libraries", e)
 
 
+def minimalizeSpaces(text: str):
+    _result = text
+    while ("  " in _result):
+        _result = _result.replace("  ", " ")
+    _result = _result.strip()
+    return _result
+
+
 def removeCharSpecials(text: str):
     nfkd = unicodedata.normalize('NFKD', text).encode(
         'ASCII', 'ignore').decode('ASCII')
     textFormated = u"".join([c for c in nfkd if not unicodedata.combining(c)])
-    return re.sub('[^a-zA-Z0-9.!+:><=[)|?$(/*,\-_ \\\]', '', textFormated)
+    textFormated = textFormated.replace('\n', ' ').replace('\r', '')
+    return re.sub('[^a-zA-Z0-9.!+:>;<=[\])|?$(/*,\-_ \\\]', '', textFormated)
 
 
 def treatDecimalField(value, numberOfDecimalPlaces=2, decimalSeparator=','):
@@ -89,3 +98,25 @@ def returnDataInDictOrArray(data: Any, arrayStructureDataReturn: List[Any], valu
         return dataAccumulated
     except Exception:
         return valueDefault
+
+
+def formatDate(valueDate: datetime.date, format='%Y-%m-%d'):
+    print(str(type(valueDate)))
+    try:
+        if str(type(valueDate)).find('datetime') >= 0:
+            return valueDate.strftime(format)
+    except Exception:
+        return valueDate
+    return valueDate
+
+
+def treatTextField(value: str, minimalizeSpace=True):
+    value = str(value)
+    try:
+        value = removeCharSpecials(value.upper())
+        value = value.replace('−', '-')
+        if minimalizeSpace is True:
+            value = minimalizeSpaces(value.strip())
+        return value
+    except Exception:
+        return ""

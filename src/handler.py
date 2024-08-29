@@ -10,6 +10,7 @@ try:
     from src.functions import returnDataInDictOrArray
     from src.process_get_saldo_only_i155 import ProcessGetSaldoOnlyI155
     from src.process_get_saldo_when_already_read_i155 import ProcessGetSaldoWhenAlreadyReadI155
+    from src.process_generate_lancs_with_depara import ProcessGenerateLancsWithDePara
 except Exception as e:
     print("Error importing libraries", e)
 
@@ -41,11 +42,15 @@ def main(event, context):
             with open(f's3://{bucket}/{key}', 'r', encoding='cp1252', transport_params={"client": client}, errors='ignore') as f:
                 if typeToGenerate == 'get_accounts_already_generate_by_saldo':
                     ProcessGetSaldoWhenAlreadyReadI155(f, url, tenant, idEcd).executeJobMainAsync()
+                elif typeToGenerate == 'generate_lancs_with_de_para':
+                    ProcessGenerateLancsWithDePara(f, url, tenant, idEcd).executeJobMainAsync()
                 else:
                     ProcessGetSaldoOnlyI155(f, url, tenant, idEcd).executeJobMainAsync()
         except Exception:
             with open(f's3://{bucket}/{key}', 'r', transport_params={"client": client}, errors='ignore') as f:
                 if typeToGenerate == 'get_accounts_already_generate_by_saldo':
                     ProcessGetSaldoWhenAlreadyReadI155(f, url, tenant, idEcd).executeJobMainAsync()
+                elif typeToGenerate == 'generate_lancs_with_de_para':
+                    ProcessGenerateLancsWithDePara(f, url, tenant, idEcd).executeJobMainAsync()
                 else:
                     ProcessGetSaldoOnlyI155(f, url, tenant, idEcd).executeJobMainAsync()

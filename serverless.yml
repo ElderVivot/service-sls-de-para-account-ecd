@@ -17,6 +17,10 @@ provider:
     AWS_S3_REGION: ${file(./env.json):AWS_S3_REGION}
     API_HOST_SERVERLESS: ${file(./env.json):API_HOST_SERVERLESS}
     API_HOST_DB_RELATIONAL: ${file(./env.json):API_HOST_DB_RELATIONAL}
+    CLOUDFARE_R2_ACCESS_KEY_ID: ${file(./env.json):CLOUDFARE_R2_ACCESS_KEY_ID}
+    CLOUDFARE_R2_SECRET_ACCESS_KEY: ${file(./env.json):CLOUDFARE_R2_SECRET_ACCESS_KEY}
+    CLOUDFARE_R2_ENDPOINT: ${file(./env.json):CLOUDFARE_R2_ENDPOINT}
+    CLOUDFARE_R2_REGION: ${file(./env.json):CLOUDFARE_R2_REGION}
 
 plugins:
   - serverless-python-requirements
