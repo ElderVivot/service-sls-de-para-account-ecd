@@ -35,7 +35,7 @@ class ProcessGenerateLancsWithDePara(object):
 
         self.__dataToSave: Dict[str, Any] = {}
 
-        self.__limitLancsByFile = 1000
+        self.__limitLancsByFile = 10000
         self.__filesToZip = []
         self.__folderTmp = '/tmp' if folderTmp == '' else folderTmp
 
@@ -153,7 +153,7 @@ class ProcessGenerateLancsWithDePara(object):
                     if identificador == '0000':
                         endPeriod = lineSplit[4]
                         self.__getDataFromIdentificador0000(lineSplit)
-                        dataFileToWrite = f"0000|{self.__dataToSave['federalRegistration']}\n"
+                        dataFileToWrite = f"0000|{self.__dataToSave['federalRegistration']}|\n"
                     elif identificador == 'I075':
                         self.__getDataFromIdentificadorI075(lineSplit)
                     elif identificador == 'I200':
@@ -162,7 +162,7 @@ class ProcessGenerateLancsWithDePara(object):
                             self.__filesToZip.append(pathToSave)
                             with open(pathToSave, 'w') as fWrite:
                                 fWrite.write(dataFileToWrite)
-                            dataFileToWrite = f"0000|{self.__dataToSave['federalRegistration']}\n"
+                            dataFileToWrite = f"0000|{self.__dataToSave['federalRegistration']}|\n"
                             numberLancsFileActual = 0
                             countNumberFile += 1
 
