@@ -11,7 +11,8 @@ try:
     from dateutil.relativedelta import relativedelta
     from uuid import uuid4
     from typing import Dict, Any, List
-    from src.functions import removeCharSpecials, treatDateFieldAsDate, treatDateField, returnDataInDictOrArray, formatDate, treatTextField
+    from src.functions import removeCharSpecials, treatDateFieldAsDate, treatDateField, returnDataInDictOrArray, \
+        formatDate, treatTextField, treatDecimalField
     from src.save_data import SaveData
     from src.get_de_para import GetDePara
     from src.zip_files import ZipDataFiles
@@ -84,15 +85,17 @@ class ProcessGenerateLancsWithDePara(object):
         return dateMovement
 
     def __getDataFromIdentificadorI155(self, lineSplit: List[str], dateLanc: str):
-        balanceAccount = lineSplit[8]
+        balanceAccount = lineSplit[4]
+        balanceAccountDecimal = treatDecimalField(balanceAccount)
         oldAccount = str(lineSplit[2])
-        newAccount = returnDataInDictOrArray(self.__accountsToDePara, [oldAccount])
-        kindBalanceAccount = lineSplit[9]
+        newAccount = returnDataInDictOrArray(self.__accountsToDePara, [oldAccount], '')
+        kindBalanceAccount = lineSplit[5]
 
-        if kindBalanceAccount == 'D':
-            return f"6100|{dateLanc}|{newAccount}||{balanceAccount}||SALDO DA ECD EM {dateLanc}||||\r\n"
-        else:
-            return f"6100|{dateLanc}||{newAccount}|{balanceAccount}||SALDO DA ECD EM {dateLanc}||||\r\n"
+        if balanceAccountDecimal > 0:
+            if kindBalanceAccount == 'D':
+                return f"6100|{dateLanc}|{newAccount}||{balanceAccount}||SALDO DA ECD EM {dateLanc}||||\r\n"
+            else:
+                return f"6100|{dateLanc}||{newAccount}|{balanceAccount}||SALDO DA ECD EM {dateLanc}||||\r\n"
 
     def __getDataFromIdentificadorI250(self, lineSplit: List[str], dateMovement) -> str:
         oldAccount = str(lineSplit[2])
@@ -182,7 +185,9 @@ class ProcessGenerateLancsWithDePara(object):
                         else:
                             firstI150File = False
                     elif identificador == 'I155' and firstI150File is True:
-                        dataFileToWriteBalanceInitial += self.__getDataFromIdentificadorI155(lineSplit, dateBalanceInitial)
+                        resultI155 = self.__getDataFromIdentificadorI155(lineSplit, dateBalanceInitial)
+                        if resultI155 is not None:
+                            dataFileToWriteBalanceInitial += resultI155
                     elif identificador == 'I200':
                         if numberLancsFileActual > self.__limitLancsByFile:
                             pathToSave = f'{self.__folderTmp}/lancamentos_arquivo_{countNumberFile}.txt'

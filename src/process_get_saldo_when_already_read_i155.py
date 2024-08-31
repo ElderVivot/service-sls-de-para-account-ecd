@@ -90,7 +90,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
 
     def __getDataFromIdentificadorI155SaldoInicial(self, lineSplit: List[str]):
         oldAccount = str(lineSplit[2])
-        balanceAccount = treatDecimalField(lineSplit[8])
+        balanceAccount = treatDecimalField(lineSplit[4])
 
         if balanceAccount > 0:
             self.__accountsWithSaldoInitial.append(oldAccount)
@@ -171,7 +171,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
                             firstI150File = False
                         if competenceEndI150 == endPeriod:
                             lastI150File = True
-                    elif identificador == 'I155' and lastI150File is True:
+                    elif identificador == 'I155':
                         self.__getDataFromIdentificadorI155(lineSplit)
                     elif identificador == 'I155' and firstI150File is True:
                         self.__getDataFromIdentificadorI155SaldoInicial(lineSplit)
