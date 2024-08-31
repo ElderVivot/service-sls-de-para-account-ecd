@@ -34,6 +34,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
         self.__accountsTypeToCorrelation: Dict[str, str] = {}
 
         self.__accounts = {}
+        self.__accountsWithSaldoInitial = []
 
     async def __getDePara(self):
         try:
@@ -87,6 +88,13 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
             "existLancs": False
         }
 
+    def __getDataFromIdentificadorI155SaldoInicial(self, lineSplit: List[str]):
+        oldAccount = str(lineSplit[2])
+        balanceAccount = treatDecimalField(lineSplit[8])
+
+        if balanceAccount > 0:
+            self.__accountsWithSaldoInitial.append(oldAccount)
+
     def __getDataFromIdentificadorI250(self, lineSplit: List[str]):
         oldAccount = str(lineSplit[2])
 
@@ -101,7 +109,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
             try:
                 existLancs = returnDataInDictOrArray(account, ['existLancs'])
                 newAccountAlreadyIdentifie = returnDataInDictOrArray(self.__deParaAlreadyExist, [oldAccount], None)
-                if existLancs is True or newAccountAlreadyIdentifie is not None:
+                if existLancs is True or newAccountAlreadyIdentifie is not None or self.__accountsWithSaldoInitial.count(oldAccount) > 0:
                     self.__dataToSave['accountsDePara'].append({
                         "oldAccount": oldAccount,
                         "newAccount": newAccountAlreadyIdentifie if newAccountAlreadyIdentifie is not None else '',
@@ -115,6 +123,7 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
     async def __readLinesAndProcessed(self):
         try:
             lastI150File = False
+            firstI150File = False
             isFileECD = False
 
             await self.__getDePara()
@@ -147,19 +156,25 @@ class ProcessGetSaldoWhenAlreadyReadI155(object):
                     identificador = lineSplit[1]
 
                     if identificador == '0000':
+                        startPeriod = lineSplit[3]
                         endPeriod = lineSplit[4]
                         self.__getDataFromIdentificador0000(lineSplit)
                     elif identificador == 'I050':
                         self.__accountsNameToCorrelation[f'{lineSplit[6]}'] = lineSplit[8]
                         self.__accountsTypeToCorrelation[f'{lineSplit[6]}'] = lineSplit[4]
                     elif identificador == 'I150':
+                        competenceStartI150 = lineSplit[2]
                         competenceEndI150 = lineSplit[3]
+                        if competenceStartI150 == startPeriod:
+                            firstI150File = True
+                        else:
+                            firstI150File = False
                         if competenceEndI150 == endPeriod:
                             lastI150File = True
-                        else:
-                            continue
                     elif identificador == 'I155' and lastI150File is True:
                         self.__getDataFromIdentificadorI155(lineSplit)
+                    elif identificador == 'I155' and firstI150File is True:
+                        self.__getDataFromIdentificadorI155SaldoInicial(lineSplit)
                     elif identificador == 'I250':
                         self.__getDataFromIdentificadorI250(lineSplit)
                     elif identificador == '9999':

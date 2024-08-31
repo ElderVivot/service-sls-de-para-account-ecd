@@ -7,10 +7,11 @@ try:
     import io
     import os
     import asyncio
-    import datetime
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
     from uuid import uuid4
     from typing import Dict, Any, List
-    from src.functions import removeCharSpecials, treatDecimalField, treatDateField, returnDataInDictOrArray, formatDate, treatTextField
+    from src.functions import removeCharSpecials, treatDateFieldAsDate, treatDateField, returnDataInDictOrArray, formatDate, treatTextField
     from src.save_data import SaveData
     from src.get_de_para import GetDePara
     from src.zip_files import ZipDataFiles
@@ -82,6 +83,17 @@ class ProcessGenerateLancsWithDePara(object):
 
         return dateMovement
 
+    def __getDataFromIdentificadorI155(self, lineSplit: List[str], dateLanc: str):
+        balanceAccount = lineSplit[8]
+        oldAccount = str(lineSplit[2])
+        newAccount = returnDataInDictOrArray(self.__accountsToDePara, [oldAccount])
+        kindBalanceAccount = lineSplit[9]
+
+        if kindBalanceAccount == 'D':
+            return f"6100|{dateLanc}|{newAccount}||{balanceAccount}||SALDO DA ECD EM {dateLanc}||||\r\n"
+        else:
+            return f"6100|{dateLanc}||{newAccount}|{balanceAccount}||SALDO DA ECD EM {dateLanc}||||\r\n"
+
     def __getDataFromIdentificadorI250(self, lineSplit: List[str], dateMovement) -> str:
         oldAccount = str(lineSplit[2])
         newAccount = returnDataInDictOrArray(self.__accountsToDePara, [oldAccount])
@@ -115,10 +127,13 @@ class ProcessGenerateLancsWithDePara(object):
     async def __readLinesAndProcessed(self):
         try:
             isFileECD = False
+            firstI150File = False
             dateMovement = None
+            dateBalanceInitial = None
             countNumberFile = 1
             numberLancsFileActual = 0
             dataFileToWrite = ''
+            dataFileToWriteBalanceInitial = ''
 
             await self.__getDePara()
 
@@ -128,7 +143,7 @@ class ProcessGenerateLancsWithDePara(object):
             self.__dataToSave['urlFileReady'] = ''
             self.__dataToSave['generateLancs'] = '1'
             self.__dataToSave['tenant'] = self.__tenant
-            dateTimeNow = datetime.datetime.now()
+            dateTimeNow = datetime.now()
             miliSecondsThreeChars = dateTimeNow.strftime('%f')[0:3]
             self.__dataToSave['updatedAt'] = f"{dateTimeNow.strftime('%Y-%m-%dT%H:%M:%S')}.{miliSecondsThreeChars}Z"
             self.__dataToSave['codeOrClassification'] = 'code'
@@ -151,11 +166,23 @@ class ProcessGenerateLancsWithDePara(object):
                     identificador = lineSplit[1]
 
                     if identificador == '0000':
-                        endPeriod = lineSplit[4]
+                        startPeriod = lineSplit[3]
                         self.__getDataFromIdentificador0000(lineSplit)
                         dataFileToWrite = f"0000|{self.__dataToSave['federalRegistration']}|\n"
                     elif identificador == 'I075':
                         self.__getDataFromIdentificadorI075(lineSplit)
+                    elif identificador == 'I150':
+                        competenceStartI150 = lineSplit[2]
+                        if competenceStartI150 == startPeriod:
+                            firstI150File = True
+                            dateBalanceInitial = treatDateFieldAsDate(competenceStartI150, 4) - relativedelta(days=1)
+                            dateBalanceInitial = formatDate(dateBalanceInitial, '%d/%m/%Y')
+                            dataFileToWriteBalanceInitial = f"0000|{self.__dataToSave['federalRegistration']}|\n"
+                            dataFileToWriteBalanceInitial += '6000|V||||\n'
+                        else:
+                            firstI150File = False
+                    elif identificador == 'I155' and firstI150File is True:
+                        dataFileToWriteBalanceInitial += self.__getDataFromIdentificadorI155(lineSplit, dateBalanceInitial)
                     elif identificador == 'I200':
                         if numberLancsFileActual > self.__limitLancsByFile:
                             pathToSave = f'{self.__folderTmp}/lancamentos_arquivo_{countNumberFile}.txt'
@@ -176,6 +203,11 @@ class ProcessGenerateLancsWithDePara(object):
                         self.__filesToZip.append(pathToSave)
                         with open(pathToSave, 'w') as fWrite:
                             fWrite.write(dataFileToWrite)
+
+                        pathToSave = f'{self.__folderTmp}/saldo_inicial.txt'
+                        self.__filesToZip.append(pathToSave)
+                        with open(pathToSave, 'w') as fWrite:
+                            fWrite.write(dataFileToWriteBalanceInitial)
                         print('Arquivo processado por completo')
                         break
                     else:

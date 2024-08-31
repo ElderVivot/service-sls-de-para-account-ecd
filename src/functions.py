@@ -50,6 +50,38 @@ def treatDecimalField(value, numberOfDecimalPlaces=2, decimalSeparator=','):
         return float(0)
 
 
+def treatDateFieldAsDate(valorCampo, formatoData=1):
+    """
+    :param valorCampo: Informar o campo string que será transformado para DATA
+    :param formatoData: 1 = 'DD/MM/YYYY' ; 2 = 'YYYY-MM-DD' ; 3 = 'YYYY/MM/DD' ; 4 = 'DDMMYYYY'
+    :return: retorna como uma data. Caso não seja uma data válida irá retornar None
+    """
+    if type(valorCampo) == 'datetime.date':
+        return valorCampo
+
+    valorCampo = str(valorCampo).strip()
+
+    lengthField = 10  # tamanho padrão da data são 10 caracteres, só muda se não tiver os separados de dia, mês e ano
+
+    if formatoData == 1:
+        formatoDataStr = "%d/%m/%Y"
+    elif formatoData == 2:
+        formatoDataStr = "%Y-%m-%d"
+    elif formatoData == 3:
+        formatoDataStr = "%Y/%m/%d"
+    elif formatoData == 4:
+        formatoDataStr = "%d%m%Y"
+        lengthField = 8
+    elif formatoData == 5:
+        formatoDataStr = "%d/%m/%Y"
+        valorCampo = valorCampo[0:6] + '20' + valorCampo[6:]
+
+    try:
+        return datetime.datetime.strptime(valorCampo[:lengthField], formatoDataStr)
+    except ValueError:
+        return None
+
+
 def treatDateField(valorCampo, formatoData=1):
     """
     :param valorCampo: Informar o campo string que será transformado para DATA
@@ -101,7 +133,6 @@ def returnDataInDictOrArray(data: Any, arrayStructureDataReturn: List[Any], valu
 
 
 def formatDate(valueDate: datetime.date, format='%Y-%m-%d'):
-    print(str(type(valueDate)))
     try:
         if str(type(valueDate)).find('datetime') >= 0:
             return valueDate.strftime(format)
