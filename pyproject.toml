@@ -8,9 +8,9 @@ packages = [{include = "service_sls_process_de_para_account_ecd"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-aiohttp = "^3.8.4"
 smart-open = "^6.3.0"
 python-dotenv = "^1.0.1"
+aiohttp = "^3.11.7"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.2.0"

@@ -11,6 +11,7 @@ try:
     from src.process_get_saldo_only_i155 import ProcessGetSaldoOnlyI155
     from src.process_get_saldo_when_already_read_i155 import ProcessGetSaldoWhenAlreadyReadI155
     from src.process_generate_lancs_with_depara import ProcessGenerateLancsWithDePara
+    from src.process_without_de_para.__main__ import ProcessWithoutDePara
 except Exception as e:
     print("Error importing libraries", e)
 
@@ -44,6 +45,8 @@ def main(event, context):
                     ProcessGetSaldoWhenAlreadyReadI155(f, url, tenant, idEcd).executeJobMainAsync()
                 elif typeToGenerate == 'generate_lancs_with_de_para':
                     ProcessGenerateLancsWithDePara(f, url, tenant, idEcd).executeJobMainAsync()
+                elif typeToGenerate == 'generate_lancs_without_de_para':
+                    ProcessWithoutDePara(f, url, tenant, idEcd).executeJobMainAsync()
                 else:
                     ProcessGetSaldoOnlyI155(f, url, tenant, idEcd).executeJobMainAsync()
         except Exception:
@@ -52,5 +55,7 @@ def main(event, context):
                     ProcessGetSaldoWhenAlreadyReadI155(f, url, tenant, idEcd).executeJobMainAsync()
                 elif typeToGenerate == 'generate_lancs_with_de_para':
                     ProcessGenerateLancsWithDePara(f, url, tenant, idEcd).executeJobMainAsync()
+                elif typeToGenerate == 'generate_lancs_without_de_para':
+                    ProcessWithoutDePara(f, url, tenant, idEcd).executeJobMainAsync()
                 else:
                     ProcessGetSaldoOnlyI155(f, url, tenant, idEcd).executeJobMainAsync()
