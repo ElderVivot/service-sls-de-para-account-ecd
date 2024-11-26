@@ -5,7 +5,8 @@ useDotenv: true
 
 provider:
   name: aws
-  deploymentMethod: direct
+  deploymentBucket:
+    name: autmais-buckets-serverless
   runtime: python3.9
   stage: prod
   region: us-east-2
